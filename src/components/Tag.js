@@ -1,65 +1,62 @@
-
-
-import React, { use, useState }  from "react";
-import axios from 'axios';
-import { useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import axios from "axios";
 import Spinner from "./Spinner";
-import events from "inquirer/lib/utils/events";
-function TAg (){
-    const[tag,settag]=useState('')
-    
-    const [randomgif,setrandomgif]=useState('');
-    const[loding,setLoding]=useState(false);
-    const API_KEY = process.env.REACT_APP_GIPHY_API_KEY;
 
-   async function fetchData() {
-  setLoding(true);
-  try {
-     const url = `https://api.giphy.com/v1/gifs/search?api_key=${API_KEY}&q=${tag}&limit=25&offset=0&rating=g&lang=en&bundle=messaging_non_clips`;
-     
-    // const url = `https://api.giphy.com/v1/gifs/search?api_key=yv5rGQvxnUqJwkJlO6E1lwRqkpdQMV7S&q=${tag}&limit=25&offset=0&rating=g&lang=en&bundle=messaging_non_clips`;
-    const { data } = await axios.get(url);
+function Tag() {
+  const [tag, setTag] = useState("");
+  const [loading, setLoading] = useState(false);
+  const API_KEY = process.env.REACT_APP_GIPHY_API_KEY;
 
-    // Check if data exists and has at least one result
-    if (data && data.data && data.data.length > 0 && data.data[0].images && data.data[0].images.fixed_height_small) {
-      const imgSource = data.data[0].images.fixed_height_small.url;
-      settag(imgSource);
-    } else {
-      console.error("No valid GIF found for the given tag.");
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const url = `https://api.giphy.com/v1/gifs/search?api_key=${API_KEY}&q=${tag}&limit=25&offset=0&rating=g&lang=en`;
+      const { data } = await axios.get(url);
+
+      if (
+        data &&
+        data.data &&
+        data.data.length > 0 &&
+        data.data[0].images &&
+        data.data[0].images.fixed_height_small
+      ) {
+        const imgSource = data.data[0].images.fixed_height_small.url;
+        setTag(imgSource);
+      } else {
+        console.error("No valid GIF found for the given tag.");
+        setTag(""); // clear image if not found
+      }
+    } catch (error) {
+      console.error("Error fetching GIF:", error);
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching GIF:", error);
-  } finally {
-    setLoding(false);
+  }, [API_KEY, tag]);
+
+useEffect(() => {
+  if (tag) {
+    
   }
+}, [tag]);
+
+  function changeHandler(event) {
+    setTag(event.target.value);
+  }
+
+  return (
+    <div className="random-inside-div">
+      <p>Search Gifs</p>
+      {loading ? (
+        <Spinner />
+      ) : (
+        tag && <img src={tag} alt="Searched GIF" />
+      )}
+      <input type="text" onChange={changeHandler}  />
+      <button className="btn" onClick={fetchData}>
+        Generate
+      </button>
+    </div>
+  );
 }
 
-     function Clickhandler(){
-    fetchData();
-     }
-
-     function changeHandler(events){
-        settag(events.target.value)
-     }
-    
-     useEffect( ()=>{ // render only one time
-      fetchData();
-     },[]);
-    
-    return (
-        <div className="random-inside-div" >
-            
-             <p>Search Gifs</p>
-            {
-                loding?(<Spinner/>):( <img src={tag}></img>)
-            }
-            <input type="text" onChange={changeHandler}></input>
-            
-            <button className="btn" onClick={Clickhandler}>Generate</button>
-            </div>
-            
-        
-    )
-
-}
-export default TAg;
+export default Tag;
